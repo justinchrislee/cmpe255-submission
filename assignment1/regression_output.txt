@@ -1,0 +1,9 @@
+Linear Regression RMSE: 6.1724146152405135
+Linear Regression R Squared: 0.4886979007906852
+Polynomial Regression RMSE Degree 2: 5.61957012958762
+Polynomial Regression R Squared Degree 2: 0.5761876727750421
+Polynomial Regression RMSE Degree 20: 26.99911961988815
+Polynomial Regression R Squared Degree 20: -8.782877153252803
+Multiple Regression RMSE: 5.750750608251491
+Multiple Regression R Squared: 0.5561701965772784
+Multiple Regression Adjusted R Squared: 0.5471736465078989

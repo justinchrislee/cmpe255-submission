@@ -2,20 +2,19 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
 from matplotlib import pyplot as plt
 from sklearn.datasets import load_boston
 
 class Regression:
     def __init__(self):
-        # get Boston housing data
-        boston = load_boston()
-
-        # split Boston data into multiple columns 
-        self.df_x = pd.DataFrame(boston.data, columns=boston.feature_names)
-
-        self.df_y = pd.DataFrame(boston.target)
+        df = pd.read_csv(filepath_or_buffer='housing.csv', sep="\s+",
+        names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD',
+        'TAX', 'PTRATIO', 'B1000', 'LSTAT', 'MEDV'])
+        
+        self.df_x = df.loc[:, 'CRIM':'LSTAT']
+        self.df_y = df.loc[:, 'MEDV':'MEDV']
     
     def linear_regression(self, features, finding_best_feature=False):
         reg = LinearRegression()
@@ -27,7 +26,7 @@ class Regression:
             feature = self.df_x[features]
 
         # split data into train and test data
-        x_train, x_test, y_train, y_test = train_test_split(feature, self.df_y, test_size=0.3, random_state=4)
+        x_train, x_test, y_train, y_test = train_test_split(feature, self.df_y, test_size=0.3, random_state=42)
 
         # determine slope and y intercept for line
         reg.fit(x_train, y_train)
@@ -35,15 +34,15 @@ class Regression:
         # plug in test data inputs for line 
         predictions = reg.predict(x_test)
 
-        # calculate rmse
-        rmse = self.get_rmse(y_test, predictions)
+        # calculate r squared
+        r_squared = self.get_r_squared(y_test, predictions)
 
         # if true return rmse to be used in find_best_feature function
         if finding_best_feature:
-            return rmse
+            return r_squared
         else: 
-            # calculate r squared
-            r_squared = self.get_r_squared(y_test, predictions)
+            # calculate rmse
+            rmse = self.get_rmse(y_test, predictions)
 
             # only plot data if exactly 1 feature is provided
             if len(features) == 1: 
@@ -66,22 +65,24 @@ class Regression:
                 print(f'Multiple Regression Adjusted R Squared: {adjusted_r_squared}')
     
     def polynomial_regression(self, poly_reg_degree, selected_feature):
-        # extract feature from df_x
+        # extract feature from x_y
         feature = self.df_x[selected_feature].to_frame()
 
         # split data into train and test data
-        x_train, x_test, y_train, y_test = train_test_split(feature, self.df_y, test_size=0.3, random_state=4)
-
-        poly = PolynomialFeatures(degree=poly_reg_degree)
-
-        x_poly = poly.fit_transform(x_train)
+        x_train, x_test, y_train, y_test = train_test_split(feature, self.df_y, test_size=0.3, random_state=42)
         
-        poly.fit(x_train, y_train)
+        model = Pipeline([('poly', PolynomialFeatures(degree=poly_reg_degree)), ('linear', LinearRegression())])
 
-        lin_reg = LinearRegression()
-        lin_reg.fit(x_poly, y_train)
+        model = model.fit(x_train, y_train)
+        
+        # sort data from least to greatest for plotting
+        x_y_test_data_combined = pd.concat([x_test, y_test], axis=1)
+        x_y_test_sorted = x_y_test_data_combined.sort_values(by=selected_feature)
+        
+        x_test = x_y_test_sorted[[selected_feature]]
+        y_test = x_y_test_sorted[['MEDV']]
 
-        predictions = lin_reg.predict(poly.fit_transform(x_test))
+        predictions = model.predict(x_test)
 
         # plot data
         self.plot_data(x_test, y_test, predictions)
@@ -105,7 +106,10 @@ class Regression:
         plt.show(block=True)
     
     def get_rmse(self, y_test, predictions):
-        rmse = mean_squared_error(y_test, predictions, squared=False)
+        y_test = pd.DataFrame(y_test)
+        error = predictions - y_test
+        mse = (error ** 2).mean()
+        rmse = float(np.sqrt(mse))
         return rmse
     
     def get_r_squared(self, y_test, predictions):
@@ -120,15 +124,14 @@ class Regression:
         return adjusted_r_squared
     
     def find_best_feature(self):
-        best_rmse_score = 0 
+        best_r_squared_score = 0 
         best_feature = "CRIM" # default value prior to figuring out feature with best rmse
 
-        # find feature with the best rmse
+        # find feature with the best r_squared value
         for col in self.df_x.columns:
-            rmse = self.linear_regression([col], True)
-
-            if rmse > best_rmse_score:
-                best_rmse_score = rmse
+            r_squared = self.linear_regression([col], True)
+            if r_squared > best_r_squared_score:
+                best_r_squared_score = r_squared
                 best_feature = col
         
         return best_feature
