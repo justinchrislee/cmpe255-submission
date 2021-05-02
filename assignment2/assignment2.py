@@ -1,13 +1,9 @@
 from sklearn.datasets import fetch_lfw_people
 
-"""
-def load_data():
-    faces = fetch_lfw_people(min_faces_per_person=60)
-    print('data loaded')
-    print(faces.target_names)
-    print(faces.images_shape)
-"""
 faces = fetch_lfw_people(min_faces_per_person=60)
+print('data loaded')
+print(faces.target_names)
+print(faces.images.shape)
 
 from sklearn.svm import SVC
 from sklearn.decomposition import PCA as RandomizedPCA
@@ -18,7 +14,7 @@ svc = SVC(kernel='rbf', class_weight='balanced')
 model = make_pipeline(pca, svc)
 
 # face data
-# print(faces.images)
+# print(faces.images.shape)
 
 # target values
 # print(faces.target.shape)
@@ -35,7 +31,6 @@ x_train_2 = x_train.shape[1]
 x_train_3 = x_train.shape[2]
 
 reshaped_x_train = x_train.reshape((x_train_1, x_train_2*x_train_3))
-model.fit(reshaped_x_train, y_train)
 
 x_test_1 = x_test.shape[0]
 x_test_2 = x_test.shape[1]
@@ -45,52 +40,31 @@ reshaped_x_test = x_test.reshape((x_test_1, x_test_2*x_test_3))
 
 from sklearn.model_selection import GridSearchCV
 
-clf = GridSearchCV(svc, {
-    'C': [1, 5, 10, 50],
-    'gamma': ['auto', 'scale'] # may need to change later on
+clf = GridSearchCV(model, {
+    'svc__C': [1e3, 5e3, 1e4, 5e4, 1e5],
+    'svc__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
 }, cv=3, return_train_score=False)
 
 clf.fit(reshaped_x_train, y_train)
-
 predictions = clf.best_estimator_.predict(reshaped_x_test)
 
 from sklearn import metrics
 
 cm = metrics.confusion_matrix(y_test, predictions)
 
-# calculate average precision and average recall across three target values
-def calculate_precision_and_recall(cm):
-    donald_true_positives = cm[0][0]
-    donald_false_positives = cm[0][1] + cm[0][2]
-    donald_false_negatives = cm[1][0] + cm[2][0]
-    donald_precision = donald_true_positives / (donald_true_positives + donald_false_positives)
-    donald_recall = donald_true_positives / (donald_true_positives + donald_false_negatives)
+# calculate precision, recall, fscore, and support
+from sklearn.metrics import precision_recall_fscore_support
 
-    george_true_positives = cm[1][1]
-    george_false_positives = cm[1][0] + cm[1][2]
-    george_false_negatives = cm[0][1] + cm[2][1]
-    george_precision = george_true_positives / (george_true_positives + george_false_positives)
-    george_recall = george_true_positives / (george_true_positives + george_false_negatives)
+names = ['Rumsfeld', 'Bush', 'Schroeder']
+score_labels = ['Recall', 'Precision', 'F1 Score', 'Support']
+scores = precision_recall_fscore_support(y_test, predictions)
+# index 0 is recall, index 1 is precision, index 2 is f1, index 3 is support
 
-    gerhard_true_positives = cm[2][2]
-    gerhard_false_positives = cm[2][0] + cm[2][1]
-    gerhard_false_negatives = cm[0][2] + cm[1][2]
-    gerhard_precision = gerhard_true_positives / (gerhard_true_positives + gerhard_false_positives)
-    gerhard_recall = gerhard_true_positives / (gerhard_true_positives + gerhard_false_negatives)
-
-    avg_precision = (donald_precision + george_precision + gerhard_precision) / 3
-    avg_recall = (donald_recall + george_recall + gerhard_recall) / 3
-
-    return avg_precision, avg_recall
-
-precision, recall = calculate_precision_and_recall(cm)
-
-def calculate_f1(precision, recall):
-    numerator = precision * recall 
-    denominator = precision + recall 
-    return 2 * (numerator / denominator)
-
-f1_score = calculate_f1(precision, recall)
+print("-------------------------------------------")
+for i in range(len(scores)):
+    for j in range(len(scores[i])):
+        print(f"{names[j]} {score_labels[i]}: {scores[i][j]}")
+    print("-------------------------------------------")
 
 import matplotlib.pyplot as plt
 

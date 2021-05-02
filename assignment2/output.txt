@@ -1,0 +1,20 @@
+data loaded
+['Donald Rumsfeld' 'George W Bush' 'Gerhard Schroeder']
+(760, 62, 47)
+-------------------------------------------
+Rumsfeld Recall: 1.0
+Bush Recall: 0.8604651162790697
+Schroeder Recall: 1.0
+-------------------------------------------
+Rumsfeld Precision: 0.7045454545454546
+Bush Precision: 1.0
+Schroeder Precision: 0.6944444444444444
+-------------------------------------------
+Rumsfeld F1 Score: 0.8266666666666667
+Bush F1 Score: 0.9249999999999999
+Schroeder F1 Score: 0.819672131147541
+-------------------------------------------
+Rumsfeld Support: 44
+Bush Support: 148
+Schroeder Support: 36
+-------------------------------------------
